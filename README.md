@@ -9,10 +9,18 @@ docker run \
   -e AWS_SECRET_ACCESS_KEY=YYYY \
   -e ZONEID=ZZZZZ \
   -e RECORDSET=some-name.example.com \
-  -e DATA=/data \
-  -v data:/data \
   --rm -it chrodriguez/aws-route53-dynamic-update
 ```
+
+It can also admit the following environment variables:
+
+* **IP**: an IP address different than the one https://ifconfig.me returns.
+  Defaults to be dynamically updated.
+* **DNS_SERVER**: which DNS server use to get current DNS respose to RECORDSET.
+  Defaults to 8.8.8.8
+* **TTL**: TTL of recordset. Defaults to 60 seconds
+* **TYPE**: which DNS record tu update. Defaults to A record
+
 
 ## Example usage with kubernetes
 
@@ -41,10 +49,11 @@ spec:
     spec:
       template:
         spec:
-          restartPolicy: OnFailure
+          restartPolicy: Never #This allow to inspect possible POD errors
           containers:
           - name: dns-update
-            image: chrodriguez / aws-route53-dynamic-update
+            image: chrodriguez/aws-route53-dynamic-update
+            imagePullPolicy: Always
             env:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
@@ -63,12 +72,4 @@ spec:
                   key: zone-id
             - name: RECORDSET
               value: some-name.example.com
-            - name: DATA
-              value: /data
-            volumeMounts:
-            - mountPath: /data
-              name: data
-          volumes:
-          - name: data
-            emptyDir: {}
 ```

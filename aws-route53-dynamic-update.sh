@@ -6,10 +6,11 @@ set -e
 
 [ -z "$RECORDSET" ] && echo RECORDSET must be set && exit 1
 
-DATA_DIR=${DATA_DIR:-/tmp}
+DATA_DIR="/tmp"
 TTL=${TTL:-60}
 TYPE=${TYPE:-"A"}
-IP=$(wget -qO- http://ifconfig.me)
+IP=${IP:-$(wget -qO- http://ifconfig.me)}
+DNS_SERVER=${DNS_SERVER:-8.8.8.8}
 
 [ -z "$IP" ] && echo IP cant be retrieved && exit 1
 
@@ -31,16 +32,22 @@ function valid_ip()
 }
 
 
-IPFILE="$DATA_DIR/ip"
-
 if ! valid_ip $IP; then
-    echo "Invalid IP address: $IP" >> "$LOGFILE"
+    echo "Invalid retrieved IP address: $IP"
     exit 1
 fi
 
-[ ! -f "$IPFILE" ] && touch "$IPFILE"
+CURRENT_IP=$( dig -t $TYPE $RECORDSET +short @${DNS_SERVER} )
 
-if grep -Fxq "$IP" "$IPFILE"; then
+[ -z "$CURRENT_IP" ] && echo CURRENT_IP cant be retrieved from DNS && exit 1
+
+if ! valid_ip $CURRENT_IP; then
+    echo "Invalid retrieved CURRENT_IP address FROM DNS: $IP"
+    exit 1
+fi
+
+if [ "$CURRENT_IP" = "$IP" ]; then
+    echo "Update not needed"
     exit 0
 else
     echo "IP has changed to $IP"
@@ -68,4 +75,3 @@ EOF
     aws route53 change-resource-record-sets --hosted-zone-id $ZONEID --change-batch file://"$TMPFILE"
     rm $TMPFILE
 fi
-echo "$IP" > "$IPFILE"
