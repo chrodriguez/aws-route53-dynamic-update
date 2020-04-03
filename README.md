@@ -45,9 +45,14 @@ metadata:
   name: dns-update
 spec:
   schedule: "@every 5m"
+  concurrencyPolicy: Forbid
   jobTemplate:
     spec:
+      backoffLimit: 4
       template:
+        metadata:
+          labels:
+            application: dns-update
         spec:
           restartPolicy: Never #This allow to inspect possible POD errors
           containers:
