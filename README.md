@@ -9,7 +9,7 @@ docker run \
   -e AWS_SECRET_ACCESS_KEY=YYYY \
   -e ZONEID=ZZZZZ \
   -e RECORDSET=some-name.example.com \
-  --rm -it chrodriguez/aws-route53-dynamic-update
+  --rm -it ghcr.io/chrodriguez/aws-route53-dynamic-update
 ```
 
 It can also admit the following environment variables:
